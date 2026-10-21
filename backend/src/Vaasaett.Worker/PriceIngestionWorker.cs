@@ -1,26 +1,52 @@
 using Vaasaett.Worker.EnergyCharts;
+using Vaasaett.Worker.Persistence;
 using Vaasaett.Worker.Validation;
 
 namespace Vaasaett.Worker;
 
 public class PriceIngestionWorker(
     ILogger<PriceIngestionWorker> logger,
+    IConfiguration config,
     EnergyChartsClient energyCharts,
-    PriceValidator validator) : BackgroundService
+    PriceValidator validator,
+    PriceStore store) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Price ingestion worker started");
+        var biddingZone = config["EnergyCharts:BiddingZone"] ?? "GR";
+        logger.LogInformation("Price ingestion worker started for {BiddingZone}", biddingZone);
 
-        var payload = await energyCharts.GetPricesAsync(stoppingToken);
-        var result = validator.Validate(payload);
+        var runId = await store.StartRunAsync(biddingZone, stoppingToken);
 
-        logger.LogInformation(
-            "Fetched {TimestampCount} timestamps. Accepted {Accepted}. Skipped null {SkippedNull}, duplicate {SkippedDuplicate}, unrealistic {SkippedUnrealistic}",
-            payload.UnixSeconds?.Count ?? 0,
-            result.Accepted.Count,
-            result.SkippedNull,
-            result.SkippedDuplicate,
-            result.SkippedUnrealistic);
+        try
+        {
+            var payload = await energyCharts.GetPricesAsync(stoppingToken);
+            var result = validator.Validate(payload);
+            var fetchedCount = payload.UnixSeconds?.Count ?? 0;
+
+            await store.UpsertAsync(
+                runId,
+                biddingZone,
+                payload.Unit,
+                result.Accepted,
+                stoppingToken);
+
+            await store.CompleteRunAsync(runId, result, fetchedCount, stoppingToken);
+
+            logger.LogInformation(
+                "Run {RunId} succeeded. Fetched {Fetched}. Upserted {Accepted}. Skipped null {SkippedNull}, duplicate {SkippedDuplicate}, unrealistic {SkippedUnrealistic}",
+                runId,
+                fetchedCount,
+                result.Accepted.Count,
+                result.SkippedNull,
+                result.SkippedDuplicate,
+                result.SkippedUnrealistic);
+        }
+        catch (Exception exception)
+        {
+            await store.FailRunAsync(runId, exception.Message, stoppingToken);
+            logger.LogError(exception, "Run {RunId} failed", runId);
+            throw;
+        }
     }
 }
