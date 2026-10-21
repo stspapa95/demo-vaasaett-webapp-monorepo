@@ -1,3 +1,7 @@
+using Npgsql;
+using Vaasaett.Api.Endpoints;
+using Vaasaett.Api.Persistence;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
@@ -12,6 +16,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+var connectionString = PostgresConnectionString.Normalize(
+    builder.Configuration.GetConnectionString("Supabase"));
+
+builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+builder.Services.AddSingleton<PriceQueries>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -25,5 +35,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.MapPriceEndpoints();
 
 app.Run();
