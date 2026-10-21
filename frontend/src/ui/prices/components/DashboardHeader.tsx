@@ -45,20 +45,20 @@ export function DashboardHeader({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <ButtonGroup>
             <Button
               type="button"
-              size="sm"
               variant={isToday ? "default" : "outline"}
+              className="h-9"
               onClick={() => onRangeChange({ from: today, to: today })}
             >
               Today
             </Button>
             <Button
               type="button"
-              size="sm"
               variant={isLast7 ? "default" : "outline"}
+              className="h-9"
               onClick={() => onRangeChange({ from: last7From, to: today })}
             >
               Last 7 days

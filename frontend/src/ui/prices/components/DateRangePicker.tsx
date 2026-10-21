@@ -18,7 +18,7 @@ type TDateRangePickerProps = {
 
 export function DateRangePicker({ today, from, to, onRangeChange }: TDateRangePickerProps) {
   return (
-    <div className="flex items-end gap-2">
+    <div className="flex items-end gap-3">
       <MarketDayPicker
         label="From"
         value={from}
@@ -31,7 +31,6 @@ export function DateRangePicker({ today, from, to, onRangeChange }: TDateRangePi
           })
         }
       />
-      <span className={cn("text-muted-foreground mb-2")}>–</span>
       <MarketDayPicker
         label="To"
         value={to}
