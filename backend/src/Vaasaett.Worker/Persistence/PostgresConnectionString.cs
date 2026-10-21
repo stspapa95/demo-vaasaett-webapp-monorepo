@@ -29,6 +29,10 @@ public static class PostgresConnectionString
             Username = Uri.UnescapeDataString(userInfo[0]),
             Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "",
             SslMode = SslMode.Require,
+            MaxAutoPrepare = 0,
+            Pooling = false,
+            Timeout = 15,
+            CommandTimeout = 30,
         }.ConnectionString;
     }
 }

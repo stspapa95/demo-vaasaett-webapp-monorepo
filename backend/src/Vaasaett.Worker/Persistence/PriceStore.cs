@@ -26,38 +26,41 @@ public sealed class PriceStore(NpgsqlDataSource dataSource)
         IReadOnlyList<ValidatedPricePoint> points,
         CancellationToken cancellationToken)
     {
-        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-
-        foreach (var point in points)
+        if (points.Count == 0)
         {
-            await using var command = new NpgsqlCommand(
-                """
-                insert into day_ahead_prices
-                    (bidding_zone, occurred_at, price, unit, source, ingestion_run_id)
-                values
-                    (@bidding_zone, @occurred_at, @price, @unit, 'energy-charts', @run_id)
-                on conflict (bidding_zone, occurred_at)
-                do update set
-                    price = excluded.price,
-                    unit = excluded.unit,
-                    ingestion_run_id = excluded.ingestion_run_id;
-                """,
-                connection,
-                transaction);
-
-            command.Parameters.AddWithValue("bidding_zone", biddingZone);
-            command.Parameters.AddWithValue(
-                "occurred_at",
-                DateTimeOffset.FromUnixTimeSeconds(point.UnixSeconds));
-            command.Parameters.AddWithValue("price", point.Price);
-            command.Parameters.AddWithValue("unit", unit);
-            command.Parameters.AddWithValue("run_id", runId);
-
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            return;
         }
 
-        await transaction.CommitAsync(cancellationToken);
+        var valueRows = string.Join(
+            ", ",
+            points.Select((_, index) =>
+                $"(@bidding_zone, @occurred_at_{index}, @price_{index}, @unit, 'energy-charts', @run_id)"));
+
+        await using var command = dataSource.CreateCommand(
+            $"""
+            insert into day_ahead_prices
+                (bidding_zone, occurred_at, price, unit, source, ingestion_run_id)
+            values {valueRows}
+            on conflict (bidding_zone, occurred_at)
+            do update set
+                price = excluded.price,
+                unit = excluded.unit,
+                ingestion_run_id = excluded.ingestion_run_id;
+            """);
+
+        command.Parameters.AddWithValue("bidding_zone", biddingZone);
+        command.Parameters.AddWithValue("unit", unit);
+        command.Parameters.AddWithValue("run_id", runId);
+
+        for (var index = 0; index < points.Count; index++)
+        {
+            command.Parameters.AddWithValue(
+                $"occurred_at_{index}",
+                DateTimeOffset.FromUnixTimeSeconds(points[index].UnixSeconds));
+            command.Parameters.AddWithValue($"price_{index}", points[index].Price);
+        }
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task CompleteRunAsync(

@@ -44,7 +44,15 @@ public class PriceIngestionWorker(
         }
         catch (Exception exception)
         {
-            await store.FailRunAsync(runId, exception.Message, stoppingToken);
+            try
+            {
+                await store.FailRunAsync(runId, exception.Message, CancellationToken.None);
+            }
+            catch (Exception failException)
+            {
+                logger.LogError(failException, "Could not mark run {RunId} as failed", runId);
+            }
+
             logger.LogError(exception, "Run {RunId} failed", runId);
             throw;
         }
