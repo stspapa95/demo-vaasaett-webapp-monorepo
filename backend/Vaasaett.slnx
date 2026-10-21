@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Vaasaett.Api/Vaasaett.Api.csproj" />
+    <Project Path="src/Vaasaett.Worker/Vaasaett.Worker.csproj" />
   </Folder>
 </Solution>
