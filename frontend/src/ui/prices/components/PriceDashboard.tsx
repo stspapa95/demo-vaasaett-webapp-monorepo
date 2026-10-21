@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CircleAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { validatePriceRange } from "@/ui/prices/lib/validate-price-range";
 import { DailyStatsCard } from "@/ui/prices/components/DailyStatsCard";
 import { DashboardHeader } from "@/ui/prices/components/DashboardHeader";
 import { IngestionRunsCard } from "@/ui/prices/components/IngestionRunsCard";
@@ -14,40 +11,21 @@ import { PriceKpiGrid } from "@/ui/prices/components/PriceKpiGrid";
 import { useDailyStats } from "@/ui/prices/hooks/use-daily-stats";
 import { useIngestionRuns } from "@/ui/prices/hooks/use-ingestion-runs";
 import { usePrices } from "@/ui/prices/hooks/use-prices";
-import { athensToday } from "@/ui/prices/lib/athens-date";
 import { summarizePrices } from "@/ui/prices/lib/summarize-prices";
+import { validatePriceRange } from "@/ui/prices/lib/validate-price-range";
+import { CircleAlert } from "lucide-react";
+import { useMemo, useState } from "react";
 
 const BIDDING_ZONE = "GR";
 
 type TDateRange = {
-  today: string;
   from: string;
   to: string;
 };
 
-export function PriceDashboard() {
-  const [range, setRange] = useState<TDateRange | null>(null);
-
-  useEffect(() => {
-    const today = athensToday();
-    setRange({ today, from: today, to: today });
-  }, []);
-
-  if (!range) {
-    return <DashboardSkeleton />;
-  }
-
-  return <PriceDashboardLoaded range={range} onRangeChange={setRange} />;
-}
-
-function PriceDashboardLoaded({
-  range,
-  onRangeChange,
-}: {
-  range: TDateRange;
-  onRangeChange: (range: TDateRange) => void;
-}) {
-  const { today, from, to } = range;
+export function PriceDashboard({ today }: { today: string }) {
+  const [range, setRange] = useState<TDateRange>({ from: today, to: today });
+  const { from, to } = range;
   const query = { biddingZone: BIDDING_ZONE, from, to };
   const rangeError = validatePriceRange(from, to);
 
@@ -70,17 +48,17 @@ function PriceDashboardLoaded({
         today={today}
         from={from}
         to={to}
-        onRangeChange={({ from, to }) => onRangeChange({ ...range, from, to })}
+        onRangeChange={setRange}
       />
 
       <main className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
-        {errorMessage ? (
+        {errorMessage && (
           <Alert variant="destructive">
             <CircleAlert />
             <AlertTitle>Could not load the dashboard</AlertTitle>
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
-        ) : null}
+        )}
 
         <PriceKpiGrid
           summary={summary}
@@ -107,7 +85,7 @@ function PriceDashboardLoaded({
   );
 }
 
-function DashboardSkeleton() {
+export function DashboardSkeleton() {
   return (
     <div className="min-h-full bg-[radial-gradient(ellipse_at_top,_oklch(0.97_0.02_185),_transparent_55%)]">
       <div className="bg-card/80 border-b">
