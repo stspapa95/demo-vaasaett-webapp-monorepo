@@ -1,0 +1,10 @@
+{
+  "name": "vaasaett-webapp",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "DOTNET_ROOT=\"${DOTNET_ROOT:-$HOME/.dotnet}\" PATH=\"$DOTNET_ROOT:$PATH\" dotnet run --project backend/src/Vaasaett.Api/Vaasaett.Api.csproj --launch-profile http",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:backend": "DOTNET_ROOT=\"${DOTNET_ROOT:-$HOME/.dotnet}\" PATH=\"$DOTNET_ROOT:$PATH\" dotnet build backend/Vaasaett.slnx"
+  }
+}
