@@ -3,6 +3,7 @@ using Vaasaett.Worker.Validation;
 
 namespace Vaasaett.Worker.Persistence;
 
+// PriceStore is responsible for storing the prices in the database.
 public sealed class PriceStore(NpgsqlDataSource dataSource)
 {
     public async Task<Guid> StartRunAsync(string biddingZone, CancellationToken cancellationToken)
