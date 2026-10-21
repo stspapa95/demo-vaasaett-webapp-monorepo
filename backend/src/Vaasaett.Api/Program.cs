@@ -9,8 +9,9 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var origin = builder.Configuration["Frontend:Origin"] ?? "http://localhost:3000";
-        policy.WithOrigins(origin)
+        var origins = (builder.Configuration["Frontend:Origin"] ?? "http://localhost:3000")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
