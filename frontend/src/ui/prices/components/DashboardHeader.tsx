@@ -28,7 +28,7 @@ export function DashboardHeader({
   const isLast7 = from === last7From && to === today;
 
   return (
-    <header className={cn("bg-card/80 border-b backdrop-blur-md")}>
+    <header className={cn("bg-card/80 sticky top-0 z-40 border-b backdrop-blur-md")}>
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex size-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">

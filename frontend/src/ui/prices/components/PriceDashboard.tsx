@@ -88,7 +88,7 @@ export function PriceDashboard({ today }: { today: string }) {
 export function DashboardSkeleton() {
   return (
     <div className="min-h-full bg-[radial-gradient(ellipse_at_top,_oklch(0.97_0.02_185),_transparent_55%)]">
-      <div className="bg-card/80 border-b">
+      <div className="bg-card/80 sticky top-0 z-40 border-b backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-5">
           <Skeleton className="size-10 rounded-xl" />
           <div className="space-y-2">
