@@ -5,17 +5,26 @@ import type { ReactNode } from "react";
 
 let browserQueryClient: QueryClient | undefined;
 
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30_000,
+        retry: 1,
+      },
+    },
+  });
+}
+
 function getQueryClient() {
   if (typeof window === "undefined") {
-    return new QueryClient();
+    return createQueryClient();
   }
 
-  browserQueryClient ??= new QueryClient();
+  browserQueryClient ??= createQueryClient();
   return browserQueryClient;
 }
 
 export function QueryProvider({ children }: { children: ReactNode }) {
-  return (
-    <QueryClientProvider client={getQueryClient()}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={getQueryClient()}>{children}</QueryClientProvider>;
 }
