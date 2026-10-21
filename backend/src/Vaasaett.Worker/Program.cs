@@ -9,9 +9,8 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.Configure<PriceValidationOptions>(
     builder.Configuration.GetSection(PriceValidationOptions.SectionName));
 
-var connectionString = builder.Configuration.GetConnectionString("Supabase")
-    ?? throw new InvalidOperationException(
-        "Set ConnectionStrings:Supabase (dotnet user-secrets set).");
+var connectionString = PostgresConnectionString.Normalize(
+    builder.Configuration.GetConnectionString("Supabase"));
 
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 builder.Services.AddSingleton<PriceStore>();
