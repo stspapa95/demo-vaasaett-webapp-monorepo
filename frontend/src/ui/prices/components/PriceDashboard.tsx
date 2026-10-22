@@ -6,6 +6,7 @@ import { DailyStatsCard } from "@/ui/prices/components/DailyStatsCard";
 import { DashboardHeader } from "@/ui/prices/components/DashboardHeader";
 import { IngestionRunsCard } from "@/ui/prices/components/IngestionRunsCard";
 import { LatestIntervalsCard } from "@/ui/prices/components/LatestIntervalsCard";
+import { PriceAskCard } from "@/ui/prices/components/PriceAskCard";
 import { PriceChartCard } from "@/ui/prices/components/PriceChartCard";
 import { PriceKpiGrid } from "@/ui/prices/components/PriceKpiGrid";
 import { useDailyStats } from "@/ui/prices/hooks/use-daily-stats";
@@ -59,6 +60,8 @@ export function PriceDashboard({ today }: { today: string }) {
             <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
+
+        <PriceAskCard />
 
         <PriceKpiGrid
           summary={summary}

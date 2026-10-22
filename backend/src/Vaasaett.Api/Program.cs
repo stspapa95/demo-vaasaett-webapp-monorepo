@@ -1,6 +1,8 @@
+using Microsoft.SemanticKernel;
 using Npgsql;
 using Vaasaett.Api.Endpoints;
 using Vaasaett.Api.Persistence;
+using Vaasaett.Api.SemanticKernel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,17 @@ var connectionString = PostgresConnectionString.Normalize(
 
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 builder.Services.AddSingleton<PriceQueries>();
+builder.Services.AddSingleton<PriceKernelPlugins>();
+builder.Services.AddSingleton<PriceAskService>();
+
+var azureOpenAi = builder.Configuration.GetSection(AzureOpenAIOptions.SectionName).Get<AzureOpenAIOptions>()
+    ?? new AzureOpenAIOptions();
+if (azureOpenAi.IsConfigured)
+{
+    builder.Services.AddKernel()
+        .AddAzureOpenAIChatCompletion(azureOpenAi.Deployment!, azureOpenAi.Endpoint!, azureOpenAi.Key!)
+        .Plugins.AddFromType<PriceKernelPlugins>();
+}
 
 var app = builder.Build();
 
@@ -37,5 +50,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors();
 app.MapPriceEndpoints();
+app.MapPriceAskEndpoints();
 
 app.Run();

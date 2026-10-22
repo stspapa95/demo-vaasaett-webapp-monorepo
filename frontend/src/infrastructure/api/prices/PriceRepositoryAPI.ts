@@ -1,10 +1,12 @@
 import type { TDailyStats } from "@/domain/entities/TDailyStats";
 import type { TIngestionRun } from "@/domain/entities/TIngestionRun";
+import type { TPriceAskResult } from "@/domain/entities/TPriceAskResult";
 import type { TPricePoint } from "@/domain/entities/TPricePoint";
 import type { TPriceRangeQuery } from "@/domain/entities/TPriceRangeQuery";
 import type { IPriceRepository } from "@/domain/repositories/PriceRepository";
 import type { TDailyStatsDTO } from "@/infrastructure/api/prices/dtos/TDailyStatsDTO";
 import type { TIngestionRunDTO } from "@/infrastructure/api/prices/dtos/TIngestionRunDTO";
+import type { TPriceAskDTO } from "@/infrastructure/api/prices/dtos/TPriceAskDTO";
 import type { TPricePointDTO } from "@/infrastructure/api/prices/dtos/TPricePointDTO";
 import { injectable } from "inversify";
 
@@ -17,10 +19,7 @@ export class PriceRepositoryAPI implements IPriceRepository {
       to: query.to,
     });
 
-    const rows = await this.getJson<TPricePointDTO[]>(
-      url,
-      "Could not load prices. Try again.",
-    );
+    const rows = await this.getJson<TPricePointDTO[]>(url, "Could not load prices. Try again.");
 
     return rows.map((row) => ({
       occurredAt: row.occurredAt,
@@ -72,6 +71,17 @@ export class PriceRepositoryAPI implements IPriceRepository {
     }));
   }
 
+  async ask(question: string): Promise<TPriceAskResult> {
+    const url = this.buildUrl("/prices/ask", {});
+    const row = await this.postJson<TPriceAskDTO>(
+      url,
+      { question },
+      "Could not answer that question. Try again.",
+    );
+
+    return { answer: row.answer };
+  }
+
   private buildUrl(path: string, params: Record<string, string>): string {
     const url = new URL(path, apiBaseUrl());
     for (const [key, value] of Object.entries(params)) {
@@ -82,13 +92,38 @@ export class PriceRepositoryAPI implements IPriceRepository {
   }
 
   private async getJson<T>(url: string, fallbackMessage: string): Promise<T> {
-    let response: Response;
+    return this.parseJson(this.get(url), fallbackMessage);
+  }
+
+  private async postJson<T>(url: string, payload: unknown, fallbackMessage: string): Promise<T> {
+    return this.parseJson(this.post(url, payload), fallbackMessage);
+  }
+
+  private async get(url: string): Promise<Response> {
     try {
-      response = await fetch(url);
+      return await fetch(url);
     } catch {
       throw new Error("Could not reach the API. Is it running?");
     }
+  }
 
+  private async post(url: string, payload: unknown): Promise<Response> {
+    try {
+      return await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      throw new Error("Could not reach the API. Is it running?");
+    }
+  }
+
+  private async parseJson<T>(
+    responsePromise: Promise<Response>,
+    fallbackMessage: string,
+  ): Promise<T> {
+    const response = await responsePromise;
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as {
         message?: string;
